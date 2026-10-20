@@ -29,11 +29,11 @@ setup(
     entry_points={
         'console_scripts': [
             # main drive mux + esp32 serial bridge
-            'drive_mux_bridge = rovernauts_control.drive_mux_bridge:main',
+            'drive_mux_bridge = rovernauts_control.drive_bridge:main',
             # 4-dof arm stepper controller (talks to the Pi Pico)
-            'arm_controller = rovernauts_control.arm_controller_node:main',
+            'arm_controller = rovernauts_control.arm:main',
             # websocket server for the web UI dashboard
-            'gcs_telemetry = rovernauts_control.gcs_telemetry_node:main',
+            'gcs_telemetry = rovernauts_control.telemetry:main',
         ],
     },
 )
