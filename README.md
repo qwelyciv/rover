@@ -12,7 +12,7 @@ Basically the brain of the rover running on a **Raspberry Pi 4 (ROS2 Humble)**. 
 
 ## The Nodes
 * **`drive_bridge.py`** — Takes `/cmd_vel` from either the operator (web UI) or Nav2 autonomous navigation. RC input always overrides autonomous mode so we don't crash into rocks. It converts linear/angular velocity into actual steering angles using a bicycle model ($L = 20\text{ cm}$), turns that into stepper steps for the 16-tooth rack gear, and sends JSON packets to the ESP32. Has a 0.5s watchdog so the rover stops dead if Wi-Fi drops.
-* **`arm_controller.py`** — Talks to the Pico to move the 4-DOF digging arm (uses modded 28BYJ-48 5V steppers). Has software limits so the links don't smash into the rover frame, plus automated sequences (`STORE` to dig sand into the container, `DEPOSIT` to dump it, and `STOW` to fold the arm flat so the rover fits the size limits for the vibration test).
+* **`arm.py`** — Talks to the Pico to move the 4-DOF digging arm (uses modded 28BYJ-48 5V steppers). Has software limits so the links don't smash into the rover frame, plus automated sequences (`STORE` to dig sand into the container, `DEPOSIT` to dump it, and `STOW` to fold the arm flat so the rover fits the size limits for the vibration test).
 * **`telemetry.py`** — Simple async WebSocket server (port 8765) for our web dashboard. Pushes Pi CPU usage, temperature, Wi-Fi signal strength (dBm from the external TP-Link dongle), and IMU tilt angles every second so we know if the rover is about to tip over (>25° warning).
 
 ## Setup & Running
@@ -32,5 +32,5 @@ Run whatever node you need:
 
 Bash
 ros2 run rovernauts_control drive_bridge
-ros2 run rovernauts_control arm_controller
+ros2 run rovernauts_control arm
 ros2 run rovernauts_control telemetry
