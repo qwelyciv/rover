@@ -27,13 +27,13 @@ setup(
     license='MIT',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [
-            # main drive mux + esp32 serial bridge
-            'drive_mux_bridge = rovernauts_control.drive_bridge:main',
-            # 4-dof arm stepper controller (talks to the Pi Pico)
-            'arm_controller = rovernauts_control.arm:main',
-            # websocket server for the web UI dashboard
-            'gcs_telemetry = rovernauts_control.telemetry:main',
-        ],
-    },
+            'console_scripts': [
+                # main drive mux + esp32 serial bridge
+                'drive_bridge = rovernauts_control.drive_bridge:main',
+                # 4-dof arm stepper controller (talks to the Pi Pico)
+                'arm = rovernauts_control.arm:main',
+                # websocket server for the web UI dashboard
+                'telemetry = rovernauts_control.telemetry:main',
+            ],
+        },
 )
