@@ -1,35 +1,36 @@
-# LASER Rovernauts — ROS2 Control & Telemetry System
+# Rovernauts — ROS2 Control Package 🚀
 
-Software system developed for the **University of Liverpool (LASER)** entry to the **UKSEDS Olympus Rover Trials 2025–2026** (Advanced Stream). 
+Code I wrote for our university rover team (**Rovernauts / LASER**, University of Liverpool) competing in the **UKSEDS Olympus Rover Trials 2025/26** (Advanced Stream). 
 
-## System Architecture
-Built on **ROS2 Humble Hawksbill (Python)** running on a **Raspberry Pi 4 Model B**, interfacing with distributed microcontrollers (**ESP32** and **Raspberry Pi Pico**) over UART/Serial.
+We made it through PDR and reached the Critical Design Review (CDR) stage with an 86% score.
 
-### Core Nodes (`rovernauts_control`)
-1. **`drive_bridge`**: 
-   - Implements hardware control multiplexing (`SW-03`), prioritizing operator manual RC overrides over autonomous **Nav2** velocity commands.
-   - Converts `geometry_msgs/Twist` commands into PWM signals for dual **Cytron MDD10A** drivers (4x **FIT0186** 12V geared motors) and step targets for the 16-tooth rack-and-pinion steering stepper.
-   - Enforces a 500ms watchdog fail-safe timeout on communication loss.
-2. **`arm_controller`**:
-   - High-level kinematic & safety controller for the 4-DOF excavation manipulator (4x bipolar **28BYJ-48** steppers driven by a **Raspberry Pi Pico**).
-   - Enforces software joint angle limits and executes automated asynchronous state-machine macros (`STORE`, `DEPOSIT`, and `STOW` for Airbus vibration test compliance).
-3. **`telemetry`**:
-   - Asynchronous WebSocket bridge for Non-LOS Ground Control Station (GCS) operation.
-   - Broadcasts 1 Hz system diagnostics (`SW-02`: SoC temperature, CPU load, **TL-WN722N** RSSI dBm) and **ICM-20948** 9-DOF IMU orientation with 30° incline stability warnings.
+## What is this?
+Basically the brain of the rover running on a **Raspberry Pi 4 (ROS2 Humble)**. Because a single Pi shouldn't be busy trying to generate tight PWM and step pulses while running SLAM/video, we split the hardware:
+* **Raspberry Pi 4**: runs ROS2, web server, video feed, and these Python nodes.
+* **ESP32**: handles the 4 DC drive motors (Cytron MDD10A drivers) and the front rack-and-pinion steering stepper. Connected via USB serial.
+* **Raspberry Pi Pico**: runs MicroPython to drive the 4 stepper motors on the 3D-printed arm. Also connected via USB serial.
 
-## Build & Run Instructions
+## The Nodes
+* **`drive_bridge.py`** — Takes `/cmd_vel` from either the operator (web UI) or Nav2 autonomous navigation. RC input always overrides autonomous mode so we don't crash into rocks. It converts linear/angular velocity into actual steering angles using a bicycle model ($L = 20\text{ cm}$), turns that into stepper steps for the 16-tooth rack gear, and sends JSON packets to the ESP32. Has a 0.5s watchdog so the rover stops dead if Wi-Fi drops.
+* **`arm_controller.py`** — Talks to the Pico to move the 4-DOF digging arm (uses modded 28BYJ-48 5V steppers). Has software limits so the links don't smash into the rover frame, plus automated sequences (`STORE` to dig sand into the container, `DEPOSIT` to dump it, and `STOW` to fold the arm flat so the rover fits the size limits for the vibration test).
+* **`telemetry.py`** — Simple async WebSocket server (port 8765) for our web dashboard. Pushes Pi CPU usage, temperature, Wi-Fi signal strength (dBm from the external TP-Link dongle), and IMU tilt angles every second so we know if the rover is about to tip over (>25° warning).
+
+## Setup & Running
+
+Install the required Python packages first:
 ```bash
-# Clone into ROS2 workspace src directory
-mkdir -p ~/ros2_ws/src && cd ~/ros2_ws/src
-git clone [https://github.com/](https://github.com/)<ТВОЄ_ІМ'Я_КОРИСТУВАЧА>/rovernauts-ros2-control.git
-
-# Install dependencies and build
 pip3 install pyserial psutil websockets
+
+Build the package inside your ROS2 workspace:
+
+Bash
 cd ~/ros2_ws
 colcon build --packages-select rovernauts_control
 source install/setup.bash
 
-# Launch nodes
-ros2 run rovernauts_control drive_mux_bridge
+Run whatever node you need:
+
+Bash
+ros2 run rovernauts_control drive_bridge
 ros2 run rovernauts_control arm_controller
-ros2 run rovernauts_control gcs_telemetry
+ros2 run rovernauts_control telemetry
